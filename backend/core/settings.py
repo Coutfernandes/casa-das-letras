@@ -48,7 +48,9 @@ DJANGO_APPS = [
     "django.contrib.staticfiles",
 ]
 
-THIRD_PARTY_APPS = []
+THIRD_PARTY_APPS = [
+    "rest_framework",
+]
 
 LOCAL_APPS = [
     "apps.accounts",
@@ -138,3 +140,21 @@ STATIC_URL = "static/"
 
 # Pasta onde o collectstatic junta os arquivos no deploy (ignorada pelo Git).
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+
+
+# ---------------------------------------------------------------------------
+# API (Django REST Framework)
+# ---------------------------------------------------------------------------
+
+REST_FRAMEWORK = {
+    # Login por sessão: cookie HttpOnly, com proteção contra CSRF.
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    # Fechado por padrão: toda rota exige login, a não ser que declare
+    # permission_classes = [AllowAny] (vitrine, auditoria, comprovante).
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+}
