@@ -32,6 +32,9 @@ DEBUG = env("DJANGO_DEBUG")
 
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])
 
+# Chave do HMAC que gera os pseudônimos públicos (apps/accounts/aliases.py).
+ALIAS_SECRET = env("ALIAS_SECRET")
+
 # ---------------------------------------------------------------------------
 # Aplicações
 # ---------------------------------------------------------------------------
@@ -47,7 +50,14 @@ DJANGO_APPS = [
 
 THIRD_PARTY_APPS = []
 
-LOCAL_APPS = []
+LOCAL_APPS = [
+    "apps.accounts",
+    "apps.catalog",
+    "apps.auctions",
+    "apps.bids",
+    "apps.wallet",
+    "apps.audit",
+]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -93,8 +103,11 @@ DATABASES = {
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # ---------------------------------------------------------------------------
-# Senhas
+# Usuários e senhas
 # ---------------------------------------------------------------------------
+
+# Usuário personalizado: login por e-mail, papel e pseudônimo (apps/accounts).
+AUTH_USER_MODEL = "accounts.User"
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
