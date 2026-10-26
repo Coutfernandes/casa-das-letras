@@ -18,6 +18,9 @@ htmlcov/
 backend/staticfiles/
 backend/media/
 
+# Banco SQLite que o Django cria por padrão; usamos PostgreSQL.
+*.sqlite3
+
 # ---- Node (frontend) ----
 node_modules/
 frontend/dist/
