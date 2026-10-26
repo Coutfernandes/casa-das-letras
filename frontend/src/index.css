@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+/*
+ * Tokens visuais da Casa das Letras.
+ * Os componentes usam só estas variáveis (pelas classes do Tailwind),
+ * então o dark mode troca apenas os valores, sem CSS duplicado.
+ */
+:root {
+  --paper: #f3efe6;
+  --surface: #fbf9f4;
+  --ink: #24251f;
+  --muted: #66665d;
+  --line: #ded9cd;
+
+  --gold: #b47b32;
+  --gold-dark: #80551f;
+  --green: #48634c;
+  --red: #a94335;
+  --live: #b94b3e;
+
+  --green-soft: rgb(72 99 76 / 0.1);
+  --red-soft: rgb(169 67 53 / 0.09);
+  --gold-soft: rgb(180 123 50 / 0.1);
+
+  --shadow: 0 16px 44px rgb(38 35 27 / 0.08);
+}
+
+[data-theme="dark"] {
+  --paper: #171915;
+  --surface: #20221d;
+  --ink: #eee7d9;
+  --muted: #aaa394;
+  --line: #3c3e35;
+
+  --gold: #d5a159;
+  --gold-dark: #e3bc7d;
+  --green: #88a684;
+  --red: #e38a78;
+  --live: #d96b59;
+
+  --green-soft: rgb(136 166 132 / 0.14);
+  --red-soft: rgb(227 138 120 / 0.12);
+  --gold-soft: rgb(213 161 89 / 0.12);
+
+  --shadow: 0 16px 44px rgb(0 0 0 / 0.28);
+}
+
+/* Liga os tokens às classes do Tailwind: bg-paper, text-ink, font-serif... */
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-gold: var(--gold);
+  --color-gold-dark: var(--gold-dark);
+  --color-green: var(--green);
+  --color-red: var(--red);
+  --color-live: var(--live);
+  --color-green-soft: var(--green-soft);
+  --color-red-soft: var(--red-soft);
+  --color-gold-soft: var(--gold-soft);
+
+  --shadow-card: var(--shadow);
+
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: "DM Sans", Arial, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, monospace;
+}
+
+/* Variante dark: para os raros casos em que a classe muda, e não só a cor. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@layer base {
+  body {
+    background-color: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-sans);
+  }
+}

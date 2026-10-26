@@ -32,6 +32,10 @@ DEBUG = env("DJANGO_DEBUG")
 
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])
 
+# Sites que podem enviar POST com o cookie de sessão (proteção CSRF).
+# Desenvolvimento: o Vite em localhost:5173. Produção: o domínio da Vercel.
+CSRF_TRUSTED_ORIGINS = env.list("DJANGO_CSRF_TRUSTED_ORIGINS", default=[])
+
 # Chave do HMAC que gera os pseudônimos públicos (apps/accounts/aliases.py).
 ALIAS_SECRET = env("ALIAS_SECRET")
 
