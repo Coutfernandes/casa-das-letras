@@ -108,6 +108,17 @@ DATABASES = {
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+
+# ---------------------------------------------------------------------------
+# Cache (resultados da busca na Open Library)
+# ---------------------------------------------------------------------------
+
+# Desenvolvimento: memória do próprio processo, sem instalar nada.
+# Produção: o Redis da VM, informado em DJANGO_CACHE_URL (redis://...).
+CACHES = {
+    "default": env.cache("DJANGO_CACHE_URL", default="locmemcache://"),
+}
+
 # ---------------------------------------------------------------------------
 # Usuários e senhas
 # ---------------------------------------------------------------------------
@@ -146,6 +157,12 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
+# Arquivos gravados pelo sistema: as capas baixadas da Open Library.
+# Em produção, o Nginx serve esta pasta, no disco da VM da Oracle.
+MEDIA_URL = "media/"
+MEDIA_ROOT = env.path("DJANGO_MEDIA_ROOT", default=BASE_DIR / "media")
+
+
 
 # ---------------------------------------------------------------------------
 # API (Django REST Framework)
@@ -161,4 +178,6 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+        # Erros de regra de negócio viram 422 com code, message e data.
+    "EXCEPTION_HANDLER": "core.exception_handler.api_exception_handler",
 }

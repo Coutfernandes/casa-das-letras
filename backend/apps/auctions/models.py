@@ -7,6 +7,25 @@ from django.utils import timezone
 from apps.catalog.models import CatalogItemSnapshot
 from core.models import UUIDModel
 
+class LotQuerySet(models.QuerySet):
+    """Consultas de lotes por fase. Agendado e ao vivo dependem do relógio (now)."""
+
+    def visible(self):
+        """Tudo que aparece na vitrine: os cancelados ficam de fora."""
+        return self.exclude(status=Lot.Status.CANCELLED)
+
+    def scheduled(self, now):
+        return self.filter(status=Lot.Status.OPEN, starts_at__gt=now)
+
+    def live(self, now):
+        return self.filter(status=Lot.Status.OPEN, starts_at__lte=now, ends_at__gt=now)
+
+    def finished(self, now):
+        """Encerrados e os que já passaram do fim, mas ainda aguardam a liquidação."""
+        return self.filter(
+            models.Q(status=Lot.Status.CLOSED)
+            | models.Q(status=Lot.Status.OPEN, ends_at__lte=now)
+        )
 
 class Lot(UUIDModel):
     """
@@ -93,6 +112,9 @@ class Lot(UUIDModel):
     closed_at = models.DateTimeField("encerrado em", null=True, blank=True)
 
     created_at = models.DateTimeField("criado em", auto_now_add=True)
+
+    objects = LotQuerySet.as_manager()
+
 
     class Meta:
         verbose_name = "lote"
