@@ -1,9 +1,5 @@
-"""O motor de lances: o único lugar do sistema que grava lances."""
-
 from dataclasses import dataclass
 from datetime import timedelta
-from .events import announce_bid
-from .models import GENESIS_HASH, Bid
 
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
@@ -16,6 +12,7 @@ from apps.wallet.services import get_balance
 from core.exceptions import BusinessRuleError
 from core.money import format_brl
 
+from .events import announce_bid
 from .models import GENESIS_HASH, Bid
 
 # Anti-sniping: um lance nos últimos 2 minutos leva o fim para "horário do lance + 2 minutos".
