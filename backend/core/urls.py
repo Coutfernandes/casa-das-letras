@@ -9,7 +9,9 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/auth/", include("apps.accounts.urls")),
     path("api/catalog/", include("apps.catalog.urls")),
+    path("api/wallet/", include("apps.wallet.urls")),
     path("api/", include("apps.auctions.urls")),
+    path("api/", include("apps.bids.urls")),
 ]
 
 # No desenvolvimento, o próprio Django serve as capas.

@@ -1,56 +1,15 @@
 """Testes da vitrine, do painel e da criação e do cancelamento de lotes."""
 
 from datetime import timedelta
-from itertools import count
 from uuid import uuid4
 
 import pytest
 from django.urls import reverse
 from django.utils import timezone
 
-from apps.catalog.models import CatalogItemSnapshot
-
 from .models import Lot
 
 HOUR = timedelta(hours=1)
-
-# Início e fim de um lote em cada fase, contados a partir de "agora".
-PERIODS = {
-    "live": (-HOUR, HOUR),
-    "scheduled": (HOUR, 2 * HOUR),
-    "finished": (-2 * HOUR, -HOUR),
-}
-
-
-@pytest.fixture
-def make_lot(auctioneer):
-    """Cria lotes direto no banco, sem passar pela Open Library."""
-    numbers = count(1)
-
-    def _make(phase="live", title="Dom Casmurro", authors=("Machado de Assis",),
-              starting_price=10_000, owner=None):
-        number = next(numbers)
-        start_offset, end_offset = PERIODS[phase]
-        now = timezone.now()
-        item = CatalogItemSnapshot.objects.create(
-            ol_work_key=f"/works/OL{number}W",
-            title=title,
-            authors=list(authors),
-            first_publish_year=1899,
-            edition_count=1,
-            cover_source_url=f"https://covers.openlibrary.org/b/id/{number}-L.jpg",
-            raw={},
-        )
-        return Lot.objects.create(
-            auctioneer=owner or auctioneer,
-            item=item,
-            starting_price=starting_price,
-            min_increment=500,
-            starts_at=now + start_offset,
-            ends_at=now + end_offset,
-        )
-
-    return _make
 
 
 @pytest.fixture
