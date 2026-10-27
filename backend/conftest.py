@@ -2,7 +2,7 @@
 
 import pytest
 from rest_framework.test import APIClient
-
+from django.core.cache import cache
 from apps.accounts.models import User
 
 PASSWORD = "SenhaSegura123!"
@@ -24,3 +24,40 @@ def make_user(db):
         )
 
     return _make_user
+
+@pytest.fixture(autouse=True)
+def clear_cache():
+    """Cada teste começa com o cache vazio, para um não ver o que o outro guardou."""
+    cache.clear()
+    yield
+    cache.clear()
+
+
+@pytest.fixture
+def auctioneer(db):
+    return User.objects.create_user(
+        email="leiloeiro@exemplo.com",
+        password=PASSWORD,
+        name="Ana Leiloeira",
+        role=User.Role.AUCTIONEER,
+    )
+
+
+@pytest.fixture
+def other_auctioneer(db):
+    return User.objects.create_user(
+        email="outro.leiloeiro@exemplo.com",
+        password=PASSWORD,
+        name="Carlos Leiloeiro",
+        role=User.Role.AUCTIONEER,
+    )
+
+
+@pytest.fixture
+def bidder(db):
+    return User.objects.create_user(
+        email="licitante@exemplo.com",
+        password=PASSWORD,
+        name="Bruno Licitante",
+        role=User.Role.BIDDER,
+    )
