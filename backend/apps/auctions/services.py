@@ -3,6 +3,7 @@
 from dataclasses import asdict, dataclass
 from datetime import datetime
 
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db import transaction
 from django.utils import timezone
@@ -34,7 +35,8 @@ def create_lot(auctioneer, book: CatalogBook, terms: LotTerms, now: datetime | N
     _check_period(terms, now)
 
     # Download fora da transação: uma rede lenta não deixa o banco esperando.
-    cover = fetch_cover(book)
+    # Com COVER_DOWNLOAD False (no Render, sem disco permanente), fica só o endereço da Open Library.
+    cover = fetch_cover(book) if settings.COVER_DOWNLOAD else None
 
     with transaction.atomic():
         snapshot = CatalogItemSnapshot(

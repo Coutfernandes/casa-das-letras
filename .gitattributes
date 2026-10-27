@@ -1,0 +1,3 @@
+# Scripts de shell sempre com quebra de linha LF, mesmo vindos do Windows.
+# Com CRLF, o Linux do Render lê "bash\r" e o build.sh não roda.
+*.sh text eol=lf

@@ -209,6 +209,34 @@ def test_creating_a_lot_keeps_a_local_copy_of_the_cover(
     assert (tmp_path / "covers" / "647501.jpg").read_bytes() == b"jpeg-falso"
 
 
+def test_with_cover_download_on_the_cover_is_fetched(api_client, auctioneer, monkeypatch, settings):
+    settings.COVER_DOWNLOAD = True
+    fetched = []
+    monkeypatch.setattr("apps.auctions.services.fetch_cover", lambda book: fetched.append(book) or None)
+    api_client.force_login(auctioneer)
+
+    response = api_client.post(reverse("auctioneer-lots"), lot_payload(), format="json")
+
+    assert response.status_code == 201
+    assert [book.cover_id for book in fetched] == [647501]
+
+
+def test_with_cover_download_off_the_network_is_not_used(api_client, auctioneer, monkeypatch, settings):
+    settings.COVER_DOWNLOAD = False
+
+    def no_network(*args, **kwargs):
+        raise AssertionError("a capa não deveria ser baixada")
+
+    monkeypatch.setattr("apps.catalog.open_library.requests.get", no_network)
+    api_client.force_login(auctioneer)
+
+    response = api_client.post(reverse("auctioneer-lots"), lot_payload(), format="json")
+
+    assert response.status_code == 201
+    assert response.json()["cover_url"] == "https://covers.openlibrary.org/b/id/647501-L.jpg"
+    assert not Lot.objects.get().item.cover
+
+
 def test_bidder_cannot_create_a_lot(api_client, bidder, no_cover_download):
     api_client.force_login(bidder)
 

@@ -1,0 +1,37 @@
+# Blueprint do Render: descreve o serviço do backend.
+# Os valores marcados com sync: false são secretos e são preenchidos no painel do Render,
+# nunca aqui (este arquivo vai para o repositório público).
+services:
+  - type: web
+    name: casa-das-letras
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: ./build.sh
+    # Um processo só: o InMemoryChannelLayer guarda as salas na memória deste processo.
+    startCommand: daphne -b 0.0.0.0 -p $PORT core.asgi:application
+    healthCheckPath: /api/health/
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
+      - key: DJANGO_DEBUG
+        value: "false"
+      # Sem disco permanente: o lote usa só o endereço da capa na Open Library.
+      - key: COVER_DOWNLOAD
+        value: "false"
+      - key: DJANGO_SECRET_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: ALIAS_SECRET
+        sync: false
+      - key: AUDIT_SIGNING_KEY
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: CRON_SECRET
+        sync: false
+      - key: DJANGO_CSRF_TRUSTED_ORIGINS
+        sync: false
+      - key: DRF_NUM_PROXIES
+        sync: false

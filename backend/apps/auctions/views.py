@@ -1,11 +1,15 @@
-"""Rotas dos lotes: vitrine e detalhe (públicas) e painel do leiloeiro."""
+"""Rotas dos lotes: vitrine e detalhe (públicas), painel do leiloeiro e a chamada do cron."""
 
+import secrets
+from dataclasses import asdict
+
+from django.conf import settings
 from django.db.models import Q, Sum, TextField
 from django.db.models.functions import Cast, Coalesce
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import status
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -14,6 +18,7 @@ from apps.accounts.permissions import IsAuctioneer
 from apps.catalog.open_library import CatalogBook
 from apps.wallet.models import WalletEntry
 
+from .maintenance import run_tick
 from .models import Lot
 from .serializers import LotCreateSerializer, LotFilterSerializer, LotSerializer
 from .services import LotTerms, cancel_lot, create_lot
@@ -149,3 +154,26 @@ class AuctioneerLotCancelView(APIView):
 
         lot = lots_with_details().get(id=lot_id)
         return Response(LotSerializer(lot, context={"now": timezone.now()}).data)
+
+
+class InternalTickView(APIView):
+    """
+    A chamada do cron-job.org a cada minuto: liquida os lotes vencidos e repõe as âncoras.
+
+    Sem login nem CSRF (authentication_classes vazio): quem chama prova que pode pelo header
+    "Authorization: Bearer <CRON_SECRET>". Sem CRON_SECRET configurado, a rota nem existe (404).
+    """
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        if not settings.CRON_SECRET:
+            raise NotFound()
+        sent = request.headers.get("Authorization", "")
+        expected = f"Bearer {settings.CRON_SECRET}"
+        # compare_digest leva o mesmo tempo com qualquer senha errada: o tempo não revela o segredo.
+        if not secrets.compare_digest(sent.encode(), expected.encode()):
+            raise PermissionDenied()
+
+        return Response(asdict(run_tick()))
