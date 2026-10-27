@@ -5,6 +5,7 @@ from django.utils import timezone
 
 from apps.auctions.models import Lot
 from apps.auctions.settlement import settle_lot
+from apps.audit.anchors import restore_anchor
 
 
 class Command(BaseCommand):
@@ -20,3 +21,7 @@ class Command(BaseCommand):
             settled += 1
 
         self.stdout.write(self.style.SUCCESS(f"{settled} lote(s) liquidado(s)."))
+
+        # Repõe no Redis as âncoras que ficaram para trás (o Redis estava fora do ar num lance).
+        restored = sum(restore_anchor(lot) for lot in Lot.objects.filter(bid_count__gt=0))
+        self.stdout.write(self.style.SUCCESS(f"{restored} âncora(s) reposta(s)."))

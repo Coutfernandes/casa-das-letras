@@ -202,4 +202,9 @@ REST_FRAMEWORK = {
     ],
         # Erros de regra de negócio viram 422 com code, message e data.
     "EXCEPTION_HANDLER": "core.exception_handler.api_exception_handler",
+    # Limites de acesso por escopo. Só valem nas rotas que declaram throttle_scope.
+    # Acima do limite, o DRF responde 429 (Too Many Requests).
+    "DEFAULT_THROTTLE_RATES": {
+        "audit": "30/min",
+    },
 }
