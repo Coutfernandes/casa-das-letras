@@ -27,5 +27,6 @@ export type RoomEvent = RoomEventBase &
     | { type: "bid.accepted"; bid: Bid; lot: Lot }
     | { type: "lot.extended"; ends_at: string; original_ends_at: string }
     | { type: "lot.cancelled"; reason: string; lot: Lot }
+    | { type: "lot.closed"; winner_alias: string | null; final_price: number | null; lot: Lot }
     | { type: "user.outbid"; amount: number; minimum_next_bid: number }
   );

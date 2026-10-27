@@ -16,11 +16,11 @@ function resultOf(lot: Lot): string {
     case "SCHEDULED":
       return `Abre ${formatDayTime(lot.starts_at)}`;
     case "CLOSED":
-      return lot.winner_alias ? `Arrematado por ${lot.winner_alias}` : "Encerrado sem vencedor";
+      return lot.winner_alias ? `${lot.winner_alias} · ${formatCents(lotPrice(lot))}` : "Sem lances";
     case "CANCELLED":
       return "Cancelado por você";
-    default:
-      return lot.bid_count > 0 ? "Aguardando liquidação" : "Encerrado sem lances";
+    case "ENDED":
+      return "Aguardando liquidação";
   }
 }
 

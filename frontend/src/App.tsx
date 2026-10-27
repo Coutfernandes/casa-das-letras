@@ -8,8 +8,10 @@ import { RequireRole } from "./components/RequireRole";
 import { AuctionRoomPage } from "./features/auction-room/AuctionRoomPage";
 import { LoginPage } from "./features/auth/LoginPage";
 import { DashboardPage } from "./features/dashboard/DashboardPage";
+import { MyBidsPage } from "./features/my-bids/MyBidsPage";
+import { ReceiptPage } from "./features/receipt/ReceiptPage";
 import { ShowcasePage } from "./features/showcase/ShowcasePage";
-import { WalletPage } from "./features/wallet/WalletPage";  
+import { WalletPage } from "./features/wallet/WalletPage";
 
 export default function App() {
   return (
@@ -23,7 +25,7 @@ export default function App() {
           <Route index element={<ShowcasePage />} />
           <Route path="lotes/:lotId" element={<AuctionRoomPage />} />
           <Route path="auditoria/:lotId" element={<ComingSoon title="Auditoria" part={11} />} />
-          <Route path="comprovante/:token" element={<ComingSoon title="Comprovante" part={10} />} />
+          <Route path="comprovante/:token" element={<ReceiptPage />} />
 
           <Route
             path="painel"
@@ -45,7 +47,7 @@ export default function App() {
             path="meus-arremates"
             element={
               <RequireRole role="BIDDER">
-                <ComingSoon title="Meus arremates" part={10} />
+                <MyBidsPage />
               </RequireRole>
             }
           />

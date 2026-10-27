@@ -16,6 +16,7 @@ import { formatCents } from "../../utils/money";
 import { BidForm } from "./BidForm";
 import { BidHistory } from "./BidHistory";
 import { LotDetails } from "./LotDetails";
+import { LotResult } from "./LotResult";
 import { RoomStatus } from "./RoomStatus";
 
 type Fetched = { lot: Lot | null; missing: boolean };
@@ -28,7 +29,10 @@ export function AuctionRoomPage() {
 
 function LotRoom({ lotId }: { lotId: string }) {
   const { user, isLoading } = useAuth();
-  const { room, applyPlacedBid } = useLotSocket(lotId, { enabled: !isLoading, identify: Boolean(user) });
+  const { room, applyPlacedBid, applyFetchedLot } = useLotSocket(lotId, {
+    enabled: !isLoading,
+    identify: Boolean(user),
+  });
   const now = useNow() + room.offsetMs;
 
   // O GET mostra o lote antes do primeiro snapshot e responde 404 para um lote que não existe.
@@ -69,6 +73,24 @@ function LotRoom({ lotId }: { lotId: string }) {
     setWalletVersion((current) => current + 1);
   }
 
+  // Quando a contagem chega a zero, busca o lote uma vez: o GET liquida o lote e o servidor
+  // avisa a sala com "lot.closed". Se o anti-sniping estendeu o fim, o lote volta ao vivo
+  // com o novo ends_at, e a busca só acontece de novo quando esse novo fim chegar.
+  const loaded = room.lot ?? fetched.lot;
+  const endedAt = loaded && currentPhase(loaded, now) === "ENDED" ? loaded.ends_at : null;
+  useEffect(() => {
+    if (!endedAt) return;
+    const controller = new AbortController();
+    fetchLot(lotId, controller.signal)
+      .then((fresh) => {
+        if (!controller.signal.aborted) applyFetchedLot(fresh);
+      })
+      .catch(() => {
+        // Sem resposta, o "lot.closed" do WebSocket ainda atualiza a sala.
+      });
+    return () => controller.abort();
+  }, [lotId, endedAt, applyFetchedLot]);
+
   if (room.notFound || fetched.missing) {
     return (
       <section className="flex flex-col items-start gap-3">
@@ -79,7 +101,6 @@ function LotRoom({ lotId }: { lotId: string }) {
     );
   }
 
-  const loaded = room.lot ?? fetched.lot;
   if (!loaded) {
     return <p className="rounded-md border border-line bg-surface px-6 py-10 text-center text-muted">Carregando a sala…</p>;
   }
@@ -160,6 +181,10 @@ function LotRoom({ lotId }: { lotId: string }) {
         {(isLive || isUpcoming) && isBidder && (
           <BidForm lot={lot} isOpen={isLive} available={available} onPlaced={handlePlaced} />
         )}
+        {/* Fica sempre na página para o leitor de tela anunciar quando o lote é liquidado. */}
+        <div role="status" aria-live="polite">
+          {lot.phase === "CLOSED" && <LotResult lot={lot} viewerAlias={viewerAlias} />}
+        </div>
 
         <BidHistory lotId={lot.id} bids={room.bids} viewerAlias={viewerAlias} />
       </div>
