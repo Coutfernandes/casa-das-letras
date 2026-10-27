@@ -1,0 +1,42 @@
+[
+  {
+    "work_key": "/works/OL1003017W",
+    "title": "Memórias Póstumas de Brás Cubas",
+    "authors": ["Machado de Assis"],
+    "first_publish_year": 1881,
+    "edition_count": 149,
+    "cover_i": 123152
+  },
+  {
+    "work_key": "/works/OL1003040W",
+    "title": "Dom Casmurro",
+    "authors": ["Machado de Assis"],
+    "first_publish_year": 1900,
+    "edition_count": 90,
+    "cover_i": 647501
+  },
+  {
+    "work_key": "/works/OL1525639W",
+    "title": "O Guarani",
+    "authors": ["José de Alencar"],
+    "first_publish_year": 1864,
+    "edition_count": 35,
+    "cover_i": 5271115
+  },
+  {
+    "work_key": "/works/OL10342454W",
+    "title": "O Cortiço",
+    "authors": ["Aluísio Azevedo"],
+    "first_publish_year": 1890,
+    "edition_count": null,
+    "cover_i": 8176059
+  },
+  {
+    "work_key": "/works/OL1196681W",
+    "title": "Os Sertões",
+    "authors": ["Euclides da Cunha"],
+    "first_publish_year": 1903,
+    "edition_count": 19,
+    "cover_i": 4921189
+  }
+]

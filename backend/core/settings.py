@@ -73,6 +73,7 @@ LOCAL_APPS = [
     "apps.bids",
     "apps.wallet",
     "apps.audit",
+    "apps.seed",
 ]
 
 INSTALLED_APPS = ["daphne", *DJANGO_APPS, *THIRD_PARTY_APPS, *LOCAL_APPS]
