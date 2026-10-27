@@ -19,3 +19,12 @@ Projeto desenvolvido para o teste técnico **Elite Dev** da Verzel.
 - `backend/`: API em Django
 - `frontend/`: aplicação React
 - `docs/`: documentação do projeto
+
+## Deploy
+
+- **Backend:** Render, descrito em `render.yaml` (build em `backend/build.sh`).
+- **Frontend:** Vercel, configurado em `frontend/vercel.json`.
+
+> O `frontend/vercel.json` repassa `/api/*` para `https://casa-das-letras.onrender.com`, um endereço de exemplo.
+> Troque pelo endereço real do serviço no Render antes do primeiro deploy na Vercel.
+> A regra de `/api` vem antes da regra que manda o resto para o `index.html`.

@@ -120,9 +120,19 @@ function reducer(state: RoomState, action: Action): RoomState {
   }
 }
 
-function socketUrl(lotId: string, ticket: string | null): string {
+/**
+ * O começo do endereço do WebSocket. Em produção, VITE_WS_URL aponta direto para o Render
+ * (a Vercel não repassa WebSocket). Sem ela, no desenvolvimento, usa a própria página (o proxy do Vite).
+ */
+function socketBase(): string {
+  const configured = import.meta.env.VITE_WS_URL;
+  if (configured) return configured.replace(/\/+$/, "");
   const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-  return withQuery(`${protocol}://${window.location.host}/ws/lots/${lotId}/`, { ticket: ticket ?? undefined });
+  return `${protocol}://${window.location.host}`;
+}
+
+function socketUrl(lotId: string, ticket: string | null): string {
+  return withQuery(`${socketBase()}/ws/lots/${lotId}/`, { ticket: ticket ?? undefined });
 }
 
 type Options = {

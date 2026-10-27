@@ -1,6 +1,7 @@
 """Testes das ferramentas compartilhadas do core."""
 
 import pytest
+from django.urls import reverse
 
 from .money import format_brl
 
@@ -16,3 +17,12 @@ from .money import format_brl
 )
 def test_format_brl(cents, expected):
     assert format_brl(cents) == expected
+
+
+@pytest.mark.django_db
+def test_health_answers_without_login(api_client, django_assert_num_queries):
+    with django_assert_num_queries(0):
+        response = api_client.get(reverse("health"))
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}

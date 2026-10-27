@@ -13,4 +13,5 @@ urlpatterns = [
         views.AuctioneerLotCancelView.as_view(),
         name="auctioneer-lot-cancel",
     ),
+    path("internal/tick/", views.InternalTickView.as_view(), name="internal-tick"),
 ]
