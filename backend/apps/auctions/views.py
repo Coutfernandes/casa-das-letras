@@ -94,6 +94,14 @@ class AuctioneerLotsView(APIView):
 
     def get(self, request):
         now = timezone.now()
+
+        # Liquidação preguiçosa, como na MyBidsView: o painel já mostra o resultado e o total recebido.
+        due = Lot.objects.filter(
+            auctioneer=request.user, status=Lot.Status.OPEN, ends_at__lte=now
+        ).values_list("id", flat=True)
+        for lot_id in list(due):
+            settle_if_due(lot_id, now)
+
         lots = list(lots_with_details().filter(auctioneer=request.user).order_by("-created_at"))
 
         phases = [lot.phase_at(now) for lot in lots]

@@ -1,4 +1,4 @@
-"""A rota do lance: a porta de entrada do motor de lances pela API."""
+"""As rotas dos lances: dar um lance e ver os meus arremates."""
 
 from django.db.models import Max
 from django.utils import timezone

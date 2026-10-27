@@ -103,3 +103,15 @@ def test_dashboard_shows_the_money_received(api_client, ended_lot, auctioneer):
     summary = api_client.get(reverse("auctioneer-lots")).json()["summary"]
 
     assert summary["total_received"] == 12_000
+
+
+def test_dashboard_settles_the_ended_lot_and_shows_the_total(api_client, ended_lot, auctioneer, other_bidder):
+    api_client.force_login(auctioneer)
+
+    body = api_client.get(reverse("auctioneer-lots")).json()
+
+    [lot] = body["results"]
+    assert lot["phase"] == Lot.Phase.CLOSED
+    assert (lot["winner_alias"], lot["final_price"]) == (other_bidder.public_alias, 12_000)
+    assert body["summary"]["total_received"] == 12_000
+    assert body["summary"]["finished"] == 1
