@@ -14,6 +14,14 @@ export function formatDayTime(iso: string): string {
   return `${DAY_MONTH.format(date)} às ${HOUR_MINUTE.format(date)}`;
 }
 
+const FULL_DATE = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+
+/** "2026-10-24T01:04:00Z" → "23/10/2026 às 21:04" (em Manaus) */
+export function formatDateTime(iso: string): string {
+  const date = new Date(iso);
+  return `${FULL_DATE.format(date)} às ${HOUR_MINUTE.format(date)}`;
+}
+
 /** Milissegundos que faltam → "02:14:37", ou "3 dias" quando falta mais de um dia. */
 export function formatRemaining(milliseconds: number): string {
   const remaining = Math.max(0, milliseconds);

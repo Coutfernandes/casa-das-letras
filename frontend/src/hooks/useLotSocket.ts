@@ -40,6 +40,7 @@ export type RoomState = {
 type Action =
   | { type: "event"; event: RoomEvent; offsetMs: number }
   | { type: "placed"; placed: PlacedBid }
+  | { type: "fetched"; lot: Lot }
   | { type: "connection"; status: ConnectionStatus }
   | { type: "not-found" };
 
@@ -93,6 +94,9 @@ function applyEvent(state: RoomState, event: RoomEvent): RoomState {
       };
     case "lot.cancelled":
       return { ...state, lot: event.lot, cancelReason: event.reason };
+    case "lot.closed":
+      // O lote liquidado já traz o vencedor (winner_alias) e o preço final (final_price).
+      return { ...state, lot: event.lot };
     case "user.outbid":
       return { ...state, outbid: true };
   }
@@ -107,6 +111,8 @@ function reducer(state: RoomState, action: Action): RoomState {
       const next = withLeader({ ...state, bids: addBid(state.bids, bid) }, newerLot(state.lot, lot));
       return extended ? { ...next, extended: true } : next;
     }
+    case "fetched":
+      return withLeader(state, newerLot(state.lot, action.lot));
     case "connection":
       return { ...state, connection: action.status };
     case "not-found":
@@ -195,5 +201,8 @@ export function useLotSocket(lotId: string, { enabled, identify }: Options) {
   /** Mostra na hora o lance que a própria pessoa acabou de dar, sem esperar o WebSocket. */
   const applyPlacedBid = useCallback((placed: PlacedBid) => dispatch({ type: "placed", placed }), []);
 
-  return { room: state, applyPlacedBid };
+  /** Usa o lote buscado pela API (GET), para quando o WebSocket não trouxer a novidade. */
+  const applyFetchedLot = useCallback((lot: Lot) => dispatch({ type: "fetched", lot }), []);
+
+  return { room: state, applyPlacedBid, applyFetchedLot };
 }

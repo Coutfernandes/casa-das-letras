@@ -104,3 +104,18 @@ def announce_cancellation(lot) -> None:
             "server_now": now.isoformat(),
         },
     )
+
+
+def announce_closed(lot) -> None:
+    """Avisa a sala de que o lote foi liquidado, com o vencedor e o preço final."""
+    now = timezone.now()
+    broadcast(
+        lot.id,
+        {
+            "type": "lot.closed",
+            "winner_alias": lot.winner.public_alias if lot.winner_id else None,
+            "final_price": lot.final_price,
+            "lot": _lot_data(lot, now),
+            "server_now": now.isoformat(),
+        },
+    )

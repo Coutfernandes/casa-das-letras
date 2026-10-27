@@ -17,6 +17,7 @@ from apps.wallet.models import WalletEntry
 from .models import Lot
 from .serializers import LotCreateSerializer, LotFilterSerializer, LotSerializer
 from .services import LotTerms, cancel_lot, create_lot
+from .settlement import settle_if_due
 
 PHASES = ("live", "scheduled", "finished")
 
@@ -80,6 +81,8 @@ class LotDetailView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, lot_id):
+        # Quem abre a sala de um lote que já terminou vê o lote liquidado.
+        settle_if_due(lot_id)
         lot = get_object_or_404(lots_with_details(), id=lot_id)
         return Response(LotSerializer(lot, context={"now": timezone.now()}).data)
 
@@ -91,6 +94,14 @@ class AuctioneerLotsView(APIView):
 
     def get(self, request):
         now = timezone.now()
+
+        # Liquidação preguiçosa, como na MyBidsView: o painel já mostra o resultado e o total recebido.
+        due = Lot.objects.filter(
+            auctioneer=request.user, status=Lot.Status.OPEN, ends_at__lte=now
+        ).values_list("id", flat=True)
+        for lot_id in list(due):
+            settle_if_due(lot_id, now)
+
         lots = list(lots_with_details().filter(auctioneer=request.user).order_by("-created_at"))
 
         phases = [lot.phase_at(now) for lot in lots]

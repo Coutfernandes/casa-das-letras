@@ -35,6 +35,9 @@ function statusOf({ lot, viewerAlias, outbid, cancelReason }: RoomStatusProps): 
         return { tone: "bad", text: "Você foi superado. O valor do seu lance voltou ao disponível." };
       }
       return null;
+    case "CLOSED":
+      // O resultado do lote liquidado aparece no lugar do formulário (LotResult).
+      return null;
     default: {
       // Encerrado: enquanto o fechamento não roda, o vencedor ainda é o líder.
       const winner = lot.winner_alias ?? lot.leader_alias;
