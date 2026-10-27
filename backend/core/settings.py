@@ -39,6 +39,15 @@ CSRF_TRUSTED_ORIGINS = env.list("DJANGO_CSRF_TRUSTED_ORIGINS", default=[])
 # Chave do HMAC que gera os pseudônimos públicos (apps/accounts/aliases.py).
 ALIAS_SECRET = env("ALIAS_SECRET")
 
+# Chave privada Ed25519 que assina a âncora de cada lote (apps/audit/signing.py).
+# Base64 dos 32 bytes da chave; gere com "python manage.py generate_signing_key".
+# Vazia, o Django inicia, mas todo lance é recusado até a chave ser configurada.
+AUDIT_SIGNING_KEY = env("AUDIT_SIGNING_KEY", default="")
+
+# Redis que guarda a cópia externa das âncoras (apps/audit/anchors.py).
+# Vazio, a cópia fica desligada (desenvolvimento sem Redis).
+REDIS_URL = env("REDIS_URL", default="")
+
 # ---------------------------------------------------------------------------
 # Aplicações
 # ---------------------------------------------------------------------------
@@ -193,4 +202,9 @@ REST_FRAMEWORK = {
     ],
         # Erros de regra de negócio viram 422 com code, message e data.
     "EXCEPTION_HANDLER": "core.exception_handler.api_exception_handler",
+    # Limites de acesso por escopo. Só valem nas rotas que declaram throttle_scope.
+    # Acima do limite, o DRF responde 429 (Too Many Requests).
+    "DEFAULT_THROTTLE_RATES": {
+        "audit": "30/min",
+    },
 }

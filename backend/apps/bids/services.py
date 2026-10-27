@@ -8,7 +8,9 @@ from django.utils import timezone
 from apps.accounts.models import User
 from apps.auctions.models import Lot
 from apps.auctions.settlement import settle_if_due
+from apps.audit.anchors import push_anchor
 from apps.audit.hashing import compute_bid_hash
+from apps.audit.signing import sign_anchor
 from apps.wallet.services import get_balance
 from core.exceptions import BusinessRuleError
 from core.money import format_brl
@@ -71,9 +73,15 @@ def place_bid(lot_id, bidder, amount: int, now=None) -> PlacedBid:
         lot.leader = bidder
         lot.bid_count = bid.sequence
         lot.last_bid_hash = bid.hash
-        lot.save(update_fields=["current_price", "leader", "bid_count", "last_bid_hash", "ends_at"])
+        lot.anchor_signature = sign_anchor(lot.id, lot.bid_count, lot.last_bid_hash)
+        lot.save(
+            update_fields=[
+                "current_price", "leader", "bid_count", "last_bid_hash", "anchor_signature", "ends_at",
+            ]
+        )
         result = PlacedBid(bid=bid, lot=lot, extended=extended, previous_leader_id=previous_leader_id)
         transaction.on_commit(lambda: announce_bid(result))
+        transaction.on_commit(lambda: push_anchor(lot))
 
     return result
 

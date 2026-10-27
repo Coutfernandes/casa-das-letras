@@ -6,6 +6,8 @@ import { ComingSoon } from "./components/ComingSoon";
 import { Layout } from "./components/Layout";
 import { RequireRole } from "./components/RequireRole";
 import { AuctionRoomPage } from "./features/auction-room/AuctionRoomPage";
+import { AuditGuidePage } from "./features/audit/AuditGuidePage";
+import { AuditPage } from "./features/audit/AuditPage";
 import { LoginPage } from "./features/auth/LoginPage";
 import { DashboardPage } from "./features/dashboard/DashboardPage";
 import { MyBidsPage } from "./features/my-bids/MyBidsPage";
@@ -24,7 +26,8 @@ export default function App() {
         <Route element={<Layout />}>
           <Route index element={<ShowcasePage />} />
           <Route path="lotes/:lotId" element={<AuctionRoomPage />} />
-          <Route path="auditoria/:lotId" element={<ComingSoon title="Auditoria" part={11} />} />
+          <Route path="auditoria" element={<AuditGuidePage />} />
+          <Route path="auditoria/:lotId" element={<AuditPage />} />
           <Route path="comprovante/:token" element={<ReceiptPage />} />
 
           <Route

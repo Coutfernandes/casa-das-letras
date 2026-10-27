@@ -55,3 +55,8 @@ const CLOCK = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-dig
 export function formatClock(iso: string): string {
   return CLOCK.format(new Date(iso));
 }
+
+/** "2026-10-23T22:30:12.481Z" → "2026-10-23 22:30:12", sempre em UTC, igual para quem audita de qualquer lugar. */
+export function formatUtc(iso: string): string {
+  return new Date(iso).toISOString().slice(0, 19).replace("T", " ");
+}
