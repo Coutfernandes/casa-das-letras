@@ -28,3 +28,16 @@ export function toFieldErrors(error: unknown): FieldErrors {
   }
   return Object.keys(errors).length > 0 ? errors : { form: GENERIC_ERROR };
 }
+
+/**
+ * A mensagem que o backend mandou num erro (o "message" das regras de negócio,
+ * ou o "detail" do DRF nos 403 e 404). Sem mensagem, usa a de reserva.
+ */
+export function apiErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof ApiError && typeof error.data === "object" && error.data !== null) {
+    const { message, detail } = error.data as { message?: unknown; detail?: unknown };
+    if (typeof message === "string") return message;
+    if (typeof detail === "string") return detail;
+  }
+  return fallback;
+}

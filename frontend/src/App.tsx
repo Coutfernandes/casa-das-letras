@@ -6,6 +6,8 @@ import { ComingSoon } from "./components/ComingSoon";
 import { Layout } from "./components/Layout";
 import { RequireRole } from "./components/RequireRole";
 import { LoginPage } from "./features/auth/LoginPage";
+import { DashboardPage } from "./features/dashboard/DashboardPage";
+import { ShowcasePage } from "./features/showcase/ShowcasePage";
 
 export default function App() {
   return (
@@ -16,7 +18,7 @@ export default function App() {
 
         {/* Telas com o cabeçalho. */}
         <Route element={<Layout />}>
-          <Route index element={<ComingSoon title="Vitrine de lotes" part={6} />} />
+          <Route index element={<ShowcasePage />} />
           <Route path="lotes/:lotId" element={<ComingSoon title="Sala do lote" part={9} />} />
           <Route path="auditoria/:lotId" element={<ComingSoon title="Auditoria" part={11} />} />
           <Route path="comprovante/:token" element={<ComingSoon title="Comprovante" part={10} />} />
@@ -25,7 +27,7 @@ export default function App() {
             path="painel"
             element={
               <RequireRole role="AUCTIONEER">
-                <ComingSoon title="Painel do leiloeiro" part={6} />
+                <DashboardPage />
               </RequireRole>
             }
           />
