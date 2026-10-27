@@ -1,6 +1,6 @@
 /** Textos e etiquetas sobre lotes usados em mais de uma tela. */
 
-import type { Lot } from "../types/lot";
+import type { Lot, LotPhase } from "../types/lot";
 
 /** 0 → "sem lances", 1 → "1 lance", 5 → "5 lances" */
 export function bidsLabel(count: number): string {
@@ -47,4 +47,19 @@ export function bookByline(book: BookInfo): string {
   return [book.authors.join(", ") || "Autor desconhecido", book.first_publish_year, editions]
     .filter(Boolean)
     .join(" · ");
+}
+
+/**
+ * A fase do lote neste instante. O backend só manda eventos quando algo acontece,
+ * então a virada de agendado para ao vivo, e de ao vivo para encerrado, é calculada pelo relógio.
+ */
+export function currentPhase(lot: Lot, now: number): LotPhase {
+  if (lot.phase === "SCHEDULED" && now >= Date.parse(lot.starts_at)) return "LIVE";
+  if (lot.phase === "LIVE" && now >= Date.parse(lot.ends_at)) return "ENDED";
+  return lot.phase;
+}
+
+/** O começo do hash de um lance, para mostrar em tabelas: "3f9a1c2b…" */
+export function shortHash(hash: string): string {
+  return `${hash.slice(0, 8)}…`;
 }

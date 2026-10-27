@@ -40,3 +40,10 @@ export function fromDateTimeInput(value: string): Date | null {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date;
 }
+
+const CLOCK = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+
+/** "2026-10-27T18:03:27Z" → "14:03:27" (em Manaus) */
+export function formatClock(iso: string): string {
+  return CLOCK.format(new Date(iso));
+}

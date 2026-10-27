@@ -3,9 +3,15 @@ import { formatRemaining } from "../utils/dates";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+type CountdownProps = {
+  endsAt: string;
+  /** Quanto o relógio do servidor está à frente do navegador (server_now − Date.now()). */
+  offsetMs?: number;
+};
+
 /** O tempo que falta até um horário, atualizado a cada segundo. */
-export function Countdown({ endsAt }: { endsAt: string }) {
-  const now = useNow();
+export function Countdown({ endsAt, offsetMs = 0 }: CountdownProps) {
+  const now = useNow() + offsetMs;
   const remaining = Date.parse(endsAt) - now;
 
   return (
