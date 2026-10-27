@@ -1,5 +1,3 @@
-"""O motor de lances: o único lugar do sistema que grava lances."""
-
 from dataclasses import dataclass
 from datetime import timedelta
 
@@ -14,6 +12,7 @@ from apps.wallet.services import get_balance
 from core.exceptions import BusinessRuleError
 from core.money import format_brl
 
+from .events import announce_bid
 from .models import GENESIS_HASH, Bid
 
 # Anti-sniping: um lance nos últimos 2 minutos leva o fim para "horário do lance + 2 minutos".
@@ -25,6 +24,7 @@ class PlacedBid:
     bid: Bid
     lot: Lot
     extended: bool
+    previous_leader_id: object = None
 
 
 def place_bid(lot_id, bidder, amount: int, now=None) -> PlacedBid:
@@ -60,7 +60,8 @@ def place_bid(lot_id, bidder, amount: int, now=None) -> PlacedBid:
                 f"Saldo insuficiente. Seu saldo disponível é {format_brl(available)}.",
                 {"available": available},
             )
-
+        
+        previous_leader_id = lot.leader_id
         bid = _record_bid(lot, bidder, amount, now)
         extended = _extend_if_sniping(lot, now)
         lot.current_price = amount
@@ -68,8 +69,10 @@ def place_bid(lot_id, bidder, amount: int, now=None) -> PlacedBid:
         lot.bid_count = bid.sequence
         lot.last_bid_hash = bid.hash
         lot.save(update_fields=["current_price", "leader", "bid_count", "last_bid_hash", "ends_at"])
+        result = PlacedBid(bid=bid, lot=lot, extended=extended, previous_leader_id=previous_leader_id)
+        transaction.on_commit(lambda: announce_bid(result))
 
-    return PlacedBid(bid=bid, lot=lot, extended=extended)
+    return result
 
 
 def _check_phase(lot: Lot, now) -> None:

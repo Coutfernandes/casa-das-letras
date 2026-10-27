@@ -33,3 +33,8 @@ export function register(registration: Registration) {
 export function logout() {
   return apiRequest<null>("/api/auth/logout/", { method: "POST" });
 }
+
+/** Um ticket de uso único (30 s) que identifica a pessoa ao abrir o WebSocket. */
+export function fetchWsTicket() {
+  return apiRequest<{ ticket: string; expires_in: number }>("/api/auth/ws-ticket/", { method: "POST" });
+}

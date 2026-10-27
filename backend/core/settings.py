@@ -54,6 +54,7 @@ DJANGO_APPS = [
 
 THIRD_PARTY_APPS = [
     "rest_framework",
+    "channels",
 ]
 
 LOCAL_APPS = [
@@ -65,7 +66,19 @@ LOCAL_APPS = [
     "apps.audit",
 ]
 
-INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+INSTALLED_APPS = ["daphne", *DJANGO_APPS, *THIRD_PARTY_APPS, *LOCAL_APPS]
+
+# ---------------------------------------------------------------------------
+# Tempo real (WebSocket)
+# ---------------------------------------------------------------------------
+
+ASGI_APPLICATION = "core.asgi.application"
+
+# Em desenvolvimento, as mensagens ficam na memória do próprio servidor.
+# Em produção, com mais de um processo, entra o Redis (parte 7).
+CHANNEL_LAYERS = {
+    "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"},
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
