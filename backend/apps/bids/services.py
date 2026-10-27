@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.auctions.models import Lot
+from apps.auctions.settlement import settle_if_due
 from apps.audit.hashing import compute_bid_hash
 from apps.wallet.services import get_balance
 from core.exceptions import BusinessRuleError
@@ -32,6 +33,8 @@ def place_bid(lot_id, bidder, amount: int, now=None) -> PlacedBid:
     if not bidder.is_bidder:
         raise PermissionDenied("Só licitantes podem dar lances.")
     now = now or timezone.now()
+    if settle_if_due(lot_id, now):
+        raise BusinessRuleError("LOT_CLOSED", "Este lote já foi encerrado.")
 
     with transaction.atomic():
         # Ordem fixa das travas: primeiro o lote, depois o licitante. Assim não há deadlock.
