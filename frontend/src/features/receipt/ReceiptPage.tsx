@@ -10,6 +10,7 @@ import { formatDateTime } from "../../utils/dates";
 import { bookByline } from "../../utils/lots";
 import { formatCents } from "../../utils/money";
 import { receiptUrl } from "../../utils/receipts";
+import { AuditSeal } from "./AuditSeal";
 
 type Loaded = { version: number; receipt: Receipt };
 type Failed = { version: number; notFound: boolean };
@@ -83,10 +84,13 @@ function ReceiptView({ token }: { token: string }) {
   return (
     <div className="mx-auto flex max-w-190 flex-col gap-5">
       <article className="rounded-md border border-line bg-surface shadow-card">
-        <header className="border-b border-line px-5 py-6 sm:px-8">
-          <p className="text-xs font-semibold tracking-[0.14em] text-muted uppercase">Comprovante de arremate</p>
-          <h1 className="mt-2 font-serif text-[36px] leading-tight font-bold">{receipt.title}</h1>
-          <p className="mt-1 text-muted">{bookByline({ ...receipt, edition_count: null })}</p>
+        <header className="flex flex-wrap items-start justify-between gap-4 border-b border-line px-5 py-6 sm:px-8">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold tracking-[0.14em] text-muted uppercase">Comprovante de arremate</p>
+            <h1 className="mt-2 font-serif text-[36px] leading-tight font-bold">{receipt.title}</h1>
+            <p className="mt-1 text-muted">{bookByline({ ...receipt, edition_count: null })}</p>
+          </div>
+          <AuditSeal lotId={receipt.lot_id} />
         </header>
 
         <div className="flex flex-col gap-6 px-5 py-6 sm:flex-row sm:px-8">

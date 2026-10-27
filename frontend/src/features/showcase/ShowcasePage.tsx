@@ -164,7 +164,7 @@ export function ShowcasePage() {
             nunca por nome ou e-mail.
           </p>
         </div>
-        <Link to="/auditoria/como-funciona" className="text-[15px] font-semibold text-gold-dark hover:text-ink">
+        <Link to="/auditoria" className="text-[15px] font-semibold text-gold-dark hover:text-ink">
           Como funciona a auditoria
         </Link>
       </section>
