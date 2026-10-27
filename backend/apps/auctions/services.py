@@ -2,6 +2,7 @@
 
 from dataclasses import asdict, dataclass
 from datetime import datetime
+from apps.bids.events import announce_cancellation
 
 from django.core.files.base import ContentFile
 from django.db import transaction
@@ -81,8 +82,8 @@ def cancel_lot(lot_id, auctioneer, now: datetime | None = None) -> Lot:
 
         lot.status = Lot.Status.CANCELLED
         lot.save(update_fields=["status"])
+        transaction.on_commit(lambda: announce_cancellation(lot))
         return lot
-
 
 def _check_period(terms: LotTerms, now: datetime) -> None:
     if terms.ends_at <= terms.starts_at:

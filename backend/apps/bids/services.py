@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass
 from datetime import timedelta
+from .events import announce_bid
+from .models import GENESIS_HASH, Bid
 
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
@@ -68,8 +70,10 @@ def place_bid(lot_id, bidder, amount: int, now=None) -> PlacedBid:
         lot.bid_count = bid.sequence
         lot.last_bid_hash = bid.hash
         lot.save(update_fields=["current_price", "leader", "bid_count", "last_bid_hash", "ends_at"])
+        result = PlacedBid(bid=bid, lot=lot, extended=extended)
+        transaction.on_commit(lambda: announce_bid(result))
 
-    return PlacedBid(bid=bid, lot=lot, extended=extended)
+    return result
 
 
 def _check_phase(lot: Lot, now) -> None:

@@ -2,6 +2,14 @@
 
 from uuid import uuid4
 
+from datetime import datetime, timedelta
+
+from channels.db import database_sync_to_async
+from django.utils import timezone
+
+from apps.auctions.models import Lot
+from apps.auctions.services import cancel_lot
+from core.exceptions import BusinessRuleError
 import pytest
 from asgiref.sync import async_to_sync
 from channels.testing import WebsocketCommunicator
@@ -68,3 +76,85 @@ def test_connection_from_another_site_is_refused(make_lot):
     connected, _ = open_room(f"/ws/lots/{lot.id}/", origin=(b"origin", b"https://site-malicioso.com"))
 
     assert not connected
+
+async def join_room(lot_id):
+    """Entra na sala do lote e descarta o snapshot, para ouvir só os próximos eventos."""
+    room = WebsocketCommunicator(application, f"/ws/lots/{lot_id}/", headers=[FRONTEND_ORIGIN])
+    connected, _ = await room.connect()
+    assert connected
+    await room.receive_json_from()
+    return room
+
+
+@pytest.mark.django_db(transaction=True)
+def test_room_hears_each_accepted_bid(make_lot, bidder):
+    lot = make_lot()
+    deposit(bidder, 100_000)
+
+    async def run():
+        room = await join_room(lot.id)
+        await database_sync_to_async(place_bid)(lot.id, bidder, 10_000)
+        event = await room.receive_json_from(timeout=2)
+        await room.disconnect()
+        return event
+
+    event = async_to_sync(run)()
+
+    assert event["type"] == "bid.accepted"
+    assert event["bid"]["amount"] == 10_000
+    assert event["bid"]["bidder_alias"] == bidder.public_alias
+    assert event["lot"]["minimum_next_bid"] == 10_500
+    assert "server_now" in event
+
+
+@pytest.mark.django_db(transaction=True)
+def test_bid_near_the_end_also_announces_the_extension(make_lot, bidder):
+    lot = make_lot()
+    ending_soon = timezone.now() + timedelta(minutes=1)
+    Lot.objects.filter(id=lot.id).update(ends_at=ending_soon)
+    deposit(bidder, 100_000)
+
+    async def run():
+        room = await join_room(lot.id)
+        await database_sync_to_async(place_bid)(lot.id, bidder, 10_000)
+        events = [await room.receive_json_from(timeout=2) for _ in range(2)]
+        await room.disconnect()
+        return events
+
+    events = async_to_sync(run)()
+
+    assert [event["type"] for event in events] == ["bid.accepted", "lot.extended"]
+    assert datetime.fromisoformat(events[1]["ends_at"]) > ending_soon
+
+
+@pytest.mark.django_db(transaction=True)
+def test_rejected_bid_announces_nothing(make_lot, bidder):
+    lot = make_lot()
+    deposit(bidder, 100_000)
+
+    async def run():
+        room = await join_room(lot.id)
+        with pytest.raises(BusinessRuleError):
+            await database_sync_to_async(place_bid)(lot.id, bidder, 1)
+        heard_nothing = await room.receive_nothing(timeout=0.5)
+        await room.disconnect()
+        return heard_nothing
+
+    assert async_to_sync(run)()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_cancelling_the_lot_tells_the_room(make_lot, auctioneer):
+    lot = make_lot()
+
+    async def run():
+        room = await join_room(lot.id)
+        await database_sync_to_async(cancel_lot)(lot.id, auctioneer)
+        event = await room.receive_json_from(timeout=2)
+        await room.disconnect()
+        return event
+
+    event = async_to_sync(run)()
+
+    assert event["type"] == "lot.cancelled"
+    assert event["lot"]["phase"] == "CANCELLED"
