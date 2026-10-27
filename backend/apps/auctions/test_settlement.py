@@ -1,37 +1,17 @@
 """Testes da liquidação: quem vence paga, o leiloeiro recebe, e nada acontece duas vezes."""
 
-from datetime import timedelta
-
 import pytest
 from django.core.management import call_command
 from django.urls import reverse
-from django.utils import timezone
 
 from apps.audit.models import Receipt
 from apps.bids.services import place_bid
 from apps.wallet.models import WalletEntry
-from apps.wallet.services import deposit, get_balance
+from apps.wallet.services import get_balance
 from core.exceptions import BusinessRuleError
 
 from .models import Lot
 from .settlement import settle_lot
-
-
-def end_now(lot):
-    """Faz o lote terminar agora, como se o tempo tivesse passado."""
-    Lot.objects.filter(id=lot.id).update(ends_at=timezone.now() - timedelta(seconds=1))
-
-
-@pytest.fixture
-def ended_lot(make_lot, bidder, other_bidder):
-    """Um lote com dois lances (o outro licitante venceu com R$ 120), que acabou de terminar."""
-    deposit(bidder, 100_000)
-    deposit(other_bidder, 100_000)
-    lot = make_lot()
-    place_bid(lot.id, bidder, 10_000)
-    place_bid(lot.id, other_bidder, 12_000)
-    end_now(lot)
-    return lot
 
 
 def test_winner_pays_and_auctioneer_receives(ended_lot, auctioneer, other_bidder):

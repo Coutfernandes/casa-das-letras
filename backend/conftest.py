@@ -1,16 +1,18 @@
 """Peças compartilhadas pelos testes de todos os apps."""
 
-import pytest
-from rest_framework.test import APIClient
-from django.core.cache import cache
-from apps.accounts.models import User
 from datetime import timedelta
 from itertools import count
 
+import pytest
+from django.core.cache import cache
 from django.utils import timezone
+from rest_framework.test import APIClient
 
+from apps.accounts.models import User
 from apps.auctions.models import Lot
+from apps.bids.services import place_bid
 from apps.catalog.models import CatalogItemSnapshot
+from apps.wallet.services import deposit
 
 PASSWORD = "SenhaSegura123!"
 
@@ -116,3 +118,25 @@ def make_lot(auctioneer):
         )
 
     return _make
+
+
+@pytest.fixture
+def end_now():
+    """Faz um lote terminar agora, como se o tempo tivesse passado. Uso: end_now(lot)."""
+
+    def _end_now(lot):
+        Lot.objects.filter(id=lot.id).update(ends_at=timezone.now() - timedelta(seconds=1))
+
+    return _end_now
+
+
+@pytest.fixture
+def ended_lot(make_lot, end_now, bidder, other_bidder):
+    """Um lote com dois lances (o outro licitante venceu com R$ 120), que acabou de terminar."""
+    deposit(bidder, 100_000)
+    deposit(other_bidder, 100_000)
+    lot = make_lot()
+    place_bid(lot.id, bidder, 10_000)
+    place_bid(lot.id, other_bidder, 12_000)
+    end_now(lot)
+    return lot
