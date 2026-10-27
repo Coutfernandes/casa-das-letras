@@ -3,12 +3,15 @@
 from datetime import timedelta
 from itertools import count
 
+import fakeredis
 import pytest
 from django.core.cache import cache
 from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.accounts.models import User
+from apps.audit import anchors
+from apps.audit.signing import generate_key_text
 from apps.auctions.models import Lot
 from apps.bids.services import place_bid
 from apps.catalog.models import CatalogItemSnapshot
@@ -40,6 +43,16 @@ def clear_cache():
     cache.clear()
     yield
     cache.clear()
+
+
+@pytest.fixture(autouse=True)
+def fake_redis(settings, monkeypatch):
+    """Cada teste tem uma chave de assinatura nova e um Redis de mentira, vazio, na memória."""
+    settings.AUDIT_SIGNING_KEY = generate_key_text()
+    settings.REDIS_URL = "redis://redis-dos-testes:6379/0"
+    client = fakeredis.FakeRedis(decode_responses=True)
+    monkeypatch.setattr(anchors, "_connect", lambda url: client)
+    return client
 
 
 @pytest.fixture
