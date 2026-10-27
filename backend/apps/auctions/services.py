@@ -2,12 +2,12 @@
 
 from dataclasses import asdict, dataclass
 from datetime import datetime
-from apps.bids.events import announce_cancellation
 
 from django.core.files.base import ContentFile
 from django.db import transaction
 from django.utils import timezone
 
+from apps.bids.events import announce_cancellation
 from apps.catalog.models import CatalogItemSnapshot
 from apps.catalog.open_library import CatalogBook, fetch_cover
 from core.exceptions import BusinessRuleError
@@ -84,6 +84,7 @@ def cancel_lot(lot_id, auctioneer, now: datetime | None = None) -> Lot:
         lot.save(update_fields=["status"])
         transaction.on_commit(lambda: announce_cancellation(lot))
         return lot
+
 
 def _check_period(terms: LotTerms, now: datetime) -> None:
     if terms.ends_at <= terms.starts_at:
