@@ -8,6 +8,7 @@ import { RequireRole } from "./components/RequireRole";
 import { LoginPage } from "./features/auth/LoginPage";
 import { DashboardPage } from "./features/dashboard/DashboardPage";
 import { ShowcasePage } from "./features/showcase/ShowcasePage";
+import { WalletPage } from "./features/wallet/WalletPage";  
 
 export default function App() {
   return (
@@ -35,7 +36,7 @@ export default function App() {
             path="carteira"
             element={
               <RequireRole role="BIDDER">
-                <ComingSoon title="Carteira" part={8} />
+                <WalletPage />
               </RequireRole>
             }
           />
