@@ -13,6 +13,7 @@ class LotSerializer(serializers.ModelSerializer):
     title = serializers.CharField(source="item.title")
     authors = serializers.ListField(source="item.authors", child=serializers.CharField())
     first_publish_year = serializers.IntegerField(source="item.first_publish_year", allow_null=True)
+    edition_count = serializers.IntegerField(source="item.edition_count", allow_null=True)
     cover_url = serializers.CharField(source="item.cover_url", allow_null=True)
     auctioneer_name = serializers.CharField(source="auctioneer.name")
     leader_alias = serializers.CharField(source="leader.public_alias", default=None)
@@ -27,6 +28,7 @@ class LotSerializer(serializers.ModelSerializer):
             "title",
             "authors",
             "first_publish_year",
+            "edition_count",
             "cover_url",
             "description",
             "auctioneer_name",

@@ -232,6 +232,7 @@ def test_auctioneer_creates_a_lot(api_client, auctioneer, no_cover_download):
     body = response.json()
     assert body["title"] == "Dom Casmurro"
     assert body["phase"] == "LIVE"
+    assert body["edition_count"] == 120
     assert body["cover_url"] == "https://covers.openlibrary.org/b/id/647501-L.jpg"
     assert Lot.objects.get().auctioneer == auctioneer
 
