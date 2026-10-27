@@ -69,6 +69,16 @@ def bidder(db):
         role=User.Role.BIDDER,
     )
 
+@pytest.fixture
+def other_bidder(db):
+    return User.objects.create_user(
+        email="segundo.licitante@exemplo.com",
+        password=PASSWORD,
+        name="Carla Licitante",
+        role=User.Role.BIDDER,
+    )
+
+
 # Início e fim de um lote em cada fase, contados a partir de "agora".
 LOT_PERIODS = {
     "live": (timedelta(hours=-1), timedelta(hours=1)),
