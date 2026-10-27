@@ -7,7 +7,7 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+from .tickets import TICKET_SECONDS, issue_ticket
 from .serializers import LoginSerializer, RegisterSerializer, UserSerializer
 
 
@@ -65,3 +65,11 @@ class MeView(APIView):
 
     def get(self, request):
         return Response(UserSerializer(request.user).data)
+
+class WsTicketView(APIView):
+    """Um ticket de 30 segundos para identificar o usuário na conexão WebSocket."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        return Response({"ticket": issue_ticket(request.user), "expires_in": TICKET_SECONDS})

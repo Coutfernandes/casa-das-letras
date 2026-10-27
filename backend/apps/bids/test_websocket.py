@@ -4,10 +4,11 @@ from uuid import uuid4
 
 from datetime import datetime, timedelta
 
+from apps.auctions.models import Lot
 from channels.db import database_sync_to_async
 from django.utils import timezone
 
-from apps.auctions.models import Lot
+
 from apps.auctions.services import cancel_lot
 from core.exceptions import BusinessRuleError
 import pytest
@@ -16,6 +17,7 @@ from channels.testing import WebsocketCommunicator
 
 from apps.wallet.services import deposit
 from core.asgi import application
+from apps.accounts.tickets import issue_ticket
 
 from .services import place_bid
 
@@ -77,13 +79,14 @@ def test_connection_from_another_site_is_refused(make_lot):
 
     assert not connected
 
-async def join_room(lot_id):
-    """Entra na sala do lote e descarta o snapshot, para ouvir só os próximos eventos."""
-    room = WebsocketCommunicator(application, f"/ws/lots/{lot_id}/", headers=[FRONTEND_ORIGIN])
+async def join_room(lot_id, ticket=None):
+    """Entra na sala do lote e devolve a conexão e o snapshot."""
+    path = f"/ws/lots/{lot_id}/" + (f"?ticket={ticket}" if ticket else "")
+    room = WebsocketCommunicator(application, path, headers=[FRONTEND_ORIGIN])
     connected, _ = await room.connect()
     assert connected
-    await room.receive_json_from()
-    return room
+    snapshot = await room.receive_json_from()
+    return room, snapshot
 
 
 @pytest.mark.django_db(transaction=True)
@@ -92,7 +95,7 @@ def test_room_hears_each_accepted_bid(make_lot, bidder):
     deposit(bidder, 100_000)
 
     async def run():
-        room = await join_room(lot.id)
+        room, _ = await join_room(lot.id)
         await database_sync_to_async(place_bid)(lot.id, bidder, 10_000)
         event = await room.receive_json_from(timeout=2)
         await room.disconnect()
@@ -115,7 +118,7 @@ def test_bid_near_the_end_also_announces_the_extension(make_lot, bidder):
     deposit(bidder, 100_000)
 
     async def run():
-        room = await join_room(lot.id)
+        room, _ = await join_room(lot.id)
         await database_sync_to_async(place_bid)(lot.id, bidder, 10_000)
         events = [await room.receive_json_from(timeout=2) for _ in range(2)]
         await room.disconnect()
@@ -133,7 +136,7 @@ def test_rejected_bid_announces_nothing(make_lot, bidder):
     deposit(bidder, 100_000)
 
     async def run():
-        room = await join_room(lot.id)
+        room, _ = await join_room(lot.id)
         with pytest.raises(BusinessRuleError):
             await database_sync_to_async(place_bid)(lot.id, bidder, 1)
         heard_nothing = await room.receive_nothing(timeout=0.5)
@@ -148,7 +151,7 @@ def test_cancelling_the_lot_tells_the_room(make_lot, auctioneer):
     lot = make_lot()
 
     async def run():
-        room = await join_room(lot.id)
+        room, _ = await join_room(lot.id)
         await database_sync_to_async(cancel_lot)(lot.id, auctioneer)
         event = await room.receive_json_from(timeout=2)
         await room.disconnect()
@@ -158,3 +161,60 @@ def test_cancelling_the_lot_tells_the_room(make_lot, auctioneer):
 
     assert event["type"] == "lot.cancelled"
     assert event["lot"]["phase"] == "CANCELLED"
+
+@pytest.mark.django_db(transaction=True)
+def test_ticket_identifies_the_viewer(make_lot, bidder):
+    lot = make_lot()
+    ticket = issue_ticket(bidder)
+
+    async def run():
+        room, snapshot = await join_room(lot.id, ticket)
+        await room.disconnect()
+        return snapshot
+
+    assert async_to_sync(run)()["viewer"] == {"alias": bidder.public_alias}
+
+
+@pytest.mark.django_db(transaction=True)
+def test_invalid_ticket_still_lets_the_visitor_watch(make_lot):
+    lot = make_lot()
+
+    async def run():
+        room, snapshot = await join_room(lot.id, "ticket-inventado")
+        await room.disconnect()
+        return snapshot
+
+    assert async_to_sync(run)()["viewer"] is None
+
+
+@pytest.mark.django_db(transaction=True)
+def test_only_the_outbid_bidder_hears_user_outbid(make_lot, bidder, other_bidder):
+    lot = make_lot()
+    deposit(bidder, 100_000)
+    deposit(other_bidder, 100_000)
+    ticket = issue_ticket(bidder)
+
+    async def run():
+        mine, _ = await join_room(lot.id, ticket)
+        visitor, _ = await join_room(lot.id)
+
+        await database_sync_to_async(place_bid)(lot.id, bidder, 10_000)
+        await mine.receive_json_from(timeout=2)
+        await visitor.receive_json_from(timeout=2)
+
+        await database_sync_to_async(place_bid)(lot.id, other_bidder, 10_500)
+        mine_events = [await mine.receive_json_from(timeout=2) for _ in range(2)]
+        visitor_event = await visitor.receive_json_from(timeout=2)
+        visitor_heard_more = not await visitor.receive_nothing(timeout=0.5)
+
+        await mine.disconnect()
+        await visitor.disconnect()
+        return mine_events, visitor_event, visitor_heard_more
+
+    mine_events, visitor_event, visitor_heard_more = async_to_sync(run)()
+
+    assert [event["type"] for event in mine_events] == ["bid.accepted", "user.outbid"]
+    assert mine_events[1]["amount"] == 10_500
+    assert mine_events[1]["minimum_next_bid"] == 11_000
+    assert visitor_event["type"] == "bid.accepted"
+    assert not visitor_heard_more
