@@ -7,7 +7,7 @@ Projeto feito para o teste técnico **Elite Dev** da Verzel.
 | | |
 | --- | --- |
 | **Site** | https://casa-das-letras.vercel.app |
-| **API** | https://casa-das-letras.onrender.com/api/ |
+| **API (vitrine)** | https://casa-das-letras.onrender.com/api/lots/ |
 | **Como funciona a auditoria** | https://casa-das-letras.vercel.app/auditoria |
 
 ## Sumário
